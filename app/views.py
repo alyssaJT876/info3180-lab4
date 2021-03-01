@@ -6,8 +6,9 @@ This file creates your application.
 """
 import os
 from app import app
-from flask import render_template, request, redirect, url_for, flash, session, abort
+from flask import render_template, request, redirect, url_for, flash, session, abort, send_from_directory
 from werkzeug.utils import secure_filename
+from .forms import UploadForm
 
 
 ###
@@ -32,15 +33,21 @@ def upload():
         abort(401)
 
     # Instantiate your form class
+    form = UploadForm()
 
     # Validate file upload on submit
     if request.method == 'POST':
+        if form.validate_on_submit():
+
         # Get file data and save to your uploads folder
+            image = form.image.data
+            filename = secure_filename(image.filename)
+            image.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            flash('File Saved', 'success')
+            return redirect(url_for('home'))
+        flash_errors(form)
+    return render_template('upload.html', form = form)
 
-        flash('File Saved', 'success')
-        return redirect(url_for('home'))
-
-    return render_template('upload.html')
 
 
 @app.route('/login', methods=['POST', 'GET'])
@@ -64,9 +71,35 @@ def logout():
     return redirect(url_for('home'))
 
 
+@app.route('/uploads/<filename>')
+def get_image(filename):
+    if not session.get('logged_in'):
+        abort(401)
+    root_dir=os.getcwd()
+    return send_from_directory(os.path.join(root_dir,app.config['UPLOAD_FOLDER']),filename, as_attachment = True)
+
+
+@app.route("/files")
+def files():
+    if not session.get('logged_in'):
+        abort(401)
+    images = get_uploaded_images()
+    return render_template( 'files.html', image = images)
+
+
 ###
 # The functions below should be applicable to all Flask apps.
 ###
+def get_uploaded_images():
+    rootdir = os.getcwd()
+    print(rootdir)
+    lst = []
+    for subdir, dirs, files in os.walk(rootdir + "/uploads"):
+        for image in files:
+                if image != ".gitkeep":
+                    lst.append(image)
+    return lst
+
 
 # Flash errors from the form if validation fails
 def flash_errors(form):

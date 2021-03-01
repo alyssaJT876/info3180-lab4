@@ -1,4 +1,6 @@
 import os
+from flask import Flask, flash, request, redirect, url_for
+from werkzeug.utils import secure_filename
 
 class Config(object):
     """Base Config Object"""
@@ -6,7 +8,7 @@ class Config(object):
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'Som3$ec5etK*y'
     ADMIN_USERNAME = os.environ.get('ADMIN_USERNAME') or 'admin'
     ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD') or 'Password123'
-
+    UPLOAD_FOLDER = './uploads'
 
 class DevelopmentConfig(Config):
     """Development Config that extends the Base Config Object"""
@@ -16,3 +18,6 @@ class DevelopmentConfig(Config):
 class ProductionConfig(Config):
     """Production Config that extends the Base Config Object"""
     DEBUG = False
+
+
+
